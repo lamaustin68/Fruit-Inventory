@@ -16,6 +16,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var bottomConstraint: NSLayoutConstraint!
     
     lazy var filtered: [String] = fruitAry
+    var keyboardIsShown = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +29,7 @@ class ViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        
     }
     
     func updateFiltered(withString searchText: String) {
@@ -53,17 +55,17 @@ extension ViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         updateFiltered(withString: searchText)
         
-        searchBar.setShowsCancelButton(searchBar.text != "", animated: true)
+        //        searchBar.setShowsCancelButton(searchBar.text != "", animated: true)
         
         self.tableView.reloadData()
     }
     
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.resignFirstResponder()
-        searchBar.text = ""
-        updateFiltered(withString: searchBar.text!)
-        tableView.reloadData()
-    }
+    //    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+    //        searchBar.resignFirstResponder()
+    //        searchBar.text = ""
+    //        updateFiltered(withString: searchBar.text!)
+    //        tableView.reloadData()
+    //    }
 }
 
 //MARK: - UITableViewDataSource
@@ -87,22 +89,28 @@ extension ViewController {
         guard let keyboardHeight = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue.height else {
             return
         }
-        self.bottomConstraint.constant = keyboardHeight - view.safeAreaInsets.bottom
-        self.tableView.contentOffset.y += keyboardHeight - self.view.safeAreaInsets.bottom
-        UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded()
+        if !keyboardIsShown {
+            self.bottomConstraint.constant = keyboardHeight - view.safeAreaInsets.bottom
+            self.tableView.contentOffset.y += keyboardHeight - self.view.safeAreaInsets.bottom
+            UIView.animate(withDuration: 0.3) {
+                self.view.layoutIfNeeded()
+            }
         }
+        keyboardIsShown = true
     }
     
     @objc func keyboardWillHide(notification: Notification) {
         guard let keyboardHeight = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue.height else {
             return
         }
-        self.bottomConstraint.constant = 0
-        self.tableView.contentOffset.y -= keyboardHeight - self.view.safeAreaInsets.bottom
-        UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded()
+        if keyboardIsShown {
+            self.bottomConstraint.constant = 0
+            self.tableView.contentOffset.y -= keyboardHeight - self.view.safeAreaInsets.bottom
+            UIView.animate(withDuration: 0.3) {
+                self.view.layoutIfNeeded()
+            }
         }
+        keyboardIsShown = false
     }
     
 }
